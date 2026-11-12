@@ -74,23 +74,30 @@ def _scan_display_name(text: str) -> str:
     display = ""
     in_ui = False
     in_bots = False
+    ui_indent = -1
+    bots_indent = -1
     for raw in text.splitlines():
         line = raw.split("#", 1)[0].rstrip()
         if not line.strip():
             continue
         indent = len(line) - len(line.lstrip(" "))
         body = line.strip()
-        if indent == 0:
-            in_ui = in_bots = False
-            if body.startswith("display_name:"):
-                display = _yaml_scalar(body.split(":", 1)[1]) or display
-            elif body.startswith("ui_meta:"):
-                in_ui = True
-            continue
-        if in_ui and not in_bots and body.startswith("hermes-bots:"):
+        if in_ui and indent <= ui_indent:
+            in_ui = False
+            in_bots = False
+        if in_bots and indent <= bots_indent:
+            in_bots = False
+
+        if indent == 0 and body.startswith("display_name:"):
+            display = _yaml_scalar(body.split(":", 1)[1]) or display
+        elif body.startswith("ui_meta:"):
+            in_ui = True
+            ui_indent = indent
+            in_bots = False
+        elif in_ui and not in_bots and body.startswith("hermes-bots:"):
             in_bots = True
-            continue
-        if in_bots and body.startswith("title:"):
+            bots_indent = indent
+        elif in_bots and body.startswith("title:"):
             title = _yaml_scalar(body.split(":", 1)[1])
             if title:
                 return title

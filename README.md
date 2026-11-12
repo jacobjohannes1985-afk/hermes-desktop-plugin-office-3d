@@ -19,6 +19,10 @@ English | [中文](./README.zh-CN.md)
 | **idle** | online but no recent session activity | person in the lounge holding tea 🍵 |
 | **offline** | no live process / no recent activity | empty desk, dark monitor, dimmed name |
 
+- Follows the Hermes light/dark theme automatically.
+- The overview counts enabled profiles, including offline ones even when offline desks are hidden.
+- Backend reads only aggregate columns (COUNT/SUM/MAX) from each profile's `state.db` — never message contents.
+
 ### Delegated subagents (since v1.4.0)
 
 `delegate_task` children run as managed workers inside the gateway process and record
@@ -39,10 +43,6 @@ exist. Each entry carries a `delegated_sessions` counter.
   (`async_delegations.task_json` for route labels, `COUNT(*)` on `sessions`).
 - Degrades silently on older Hermes (no `async_delegations` table), locked db, or
   malformed JSON.
-
-- Follows the Hermes light/dark theme automatically.
-- The overview counts enabled profiles, including offline ones even when offline desks are hidden.
-- Backend reads only aggregate columns (COUNT/SUM/MAX) from each profile's `state.db` — never message contents.
 
 ## Beyond the page
 
@@ -81,7 +81,7 @@ exist. Each entry carries a `delegated_sessions` counter.
 
 This repo is a single **unified package** — one installable folder that ships both halves:
 
-```
+```text
 plugin.yaml                 # manifest (name, version, description, platforms)
 __init__.py                 # agent half — the read-only office_status tool
 desktop/plugin.js           # desktop half — the canvas office page, sidebar nav,
@@ -141,7 +141,7 @@ Then make it take effect:
 
 - Hermes Desktop **0.21.4+** — the desktop app is required; the CLI/gateway alone does not load desktop plugins.
 - The dashboard web server running (it serves `/api/plugins/...`).
-- **Linux, macOS or Windows.** The only platform-specific code was the PID liveness probe: `os.kill(pid, 0)` is routed through `TerminateProcess` on Windows, so the check refused to run there. It now uses `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` + `GetExitCodeProcess` via `ctypes`, which never signals the target — see [`WINDOWS.md`](./WINDOWS.md) for what was measured.
+- **Linux, macOS or Windows.** The only platform-specific code was the PID liveness probe: `os.kill(pid, 0)` is routed through `TerminateProcess` on Windows, so the check refused to run there. It now uses `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` + `GetExitCodeProcess` via `ctypes`, which never signals the target — see [WINDOWS.md](./WINDOWS.md) for what was measured.
 
 ## Releasing
 

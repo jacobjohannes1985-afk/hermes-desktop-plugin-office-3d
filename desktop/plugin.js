@@ -1053,7 +1053,7 @@ function drawStatusBar(c, cssW, cssH, barH, entries, palette) {
     if (!e || typeof e !== 'object') continue
     if (e.online) online++
     if (e.busy) busy++
-    sessions += Number(e.active_sessions) || 0
+    sessions += (Number(e.active_sessions) || 0) + (Number(e.delegated_sessions) || 0)
     tokens += Number(e.tokens_total) || 0
     cost += Number(e.cost_total) || 0
     agents += Number(e.active_agents) || 0
@@ -2105,7 +2105,7 @@ function summarize(entries) {
     if (!e || typeof e !== 'object') continue
     if (e.online) online++
     if (e.busy) busy++
-    sessions += Number(e.active_sessions) || 0
+    sessions += (Number(e.active_sessions) || 0) + (Number(e.delegated_sessions) || 0)
     tokens += Number(e.tokens_total) || 0
     cost += Number(e.cost_total) || 0
     agents += Number(e.active_agents) || 0
@@ -2417,7 +2417,7 @@ function OfficeDetailPanel({ entry, onClose }) {
           }),
         ],
       }),
-      jsx(OfficeMetric, { label: 'Sessions active in last 90s', value: String(entry.active_sessions | 0) }),
+      jsx(OfficeMetric, { label: 'Sessions active in last 90s', value: String(((entry.active_sessions || 0) + (entry.delegated_sessions || 0)) | 0) }),
       jsx(OfficeMetric, { label: 'Unended recorded sessions', value: String(entry.open_sessions | 0) }),
       jsx(OfficeMetric, { label: 'Gateway-reported agents', value: String(entry.active_agents | 0) }),
       jsx(OfficeMetric, { label: 'Recorded-session tokens', value: formatCompact(Number(entry.tokens_total) || 0) }),

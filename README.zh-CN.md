@@ -20,8 +20,18 @@
 | **offline（离线）** | 无存活进程 / 无近期活动 | 空工位、显示器熄灭、名字变暗 |
 
 - 自动跟随 Hermes 的明暗主题。
-- 底部状态徽章：**online / busy / 活跃会话 / tokens / agents / cost**，跨所有 profile 聚合。
+- 概览统计包含已启用的 profile，即使离线工位被隐藏也会计入。
 - 后端只读各 profile `state.db` 的聚合列（COUNT/SUM/MAX），**绝不读会话正文**。
+
+### 委派子 agent（自 v1.4.0 起）
+
+`delegate_task` 子任务作为托管 worker 运行在 gateway 进程内，并将其会话记录在**顶层** `state.db`（`source='subagent'`），而非被路由 profile 自己的 `state.db` 中。如果没有归因，专业工位（如 `meo-finance`、`meo-coding` …）在其委派任务活跃运行时会保持**离线**状态，且所有委派活动都会误亮起 `default` 工位。
+
+当委派任务正在进行时，后端与 `office_status` 会从任务显式的 `profile` 字段或 `async_delegations` 中的 `[profile]` 目标前缀解析其路由，并在存在活跃子 agent 会话时点亮被路由的工位。每个条目都带有 `delegated_sessions` 计数器。
+
+- 仅用于展示的启发式规则：路由到同一 profile 的并发委派共享信用；历史（已完成）子 agent 会话不会被重新归因——已记录的使用量仍保留在 `default` 下。
+- 与插件其余部分相同的隐私边界：仅只读聚合数据（`async_delegations.task_json` 用于路由标签，`sessions` 上的 `COUNT(*)`）。
+- 在旧版 Hermes（无 `async_delegations` 表）、数据库锁定或 JSON 损坏时静默降级。
 
 ## 页面之外
 
@@ -30,7 +40,7 @@
 - **状态栏挂件** —— 常驻在状态栏右端的小结（有活在跑时显示 `🏢 2 busy`，否则 `🏢 4 online`）。点击打开办公室，悬停看完整分解。
 - **⌘K 命令面板 + 快捷键** —— "Open Office 3D"，默认 `mod+shift+o`，可在设置里改绑。
 - **`office_status` agent 工具** —— 只读。报告各 profile 的 online/busy/offline 与聚合的会话数/token/成本，让模型无需桌面 app 就能回答"现在谁在干活"。隐私边界与后端一致。
-- **设置 ▸ 插件 ▸ Office 3D** —— 刷新间隔（2s / 5s / 15s / 60s）、隐藏离线 profile、可选的"profile 状态变化时弹通知"。
+- **设置 ▸ 插件 ▸ Office 3D** —— 刷新间隔（2s / 5s / 15s / 60s）、隐藏离线 profile、选择可见 profile（包含 `default`）、以及可选的"profile 状态变化时弹通知"。默认启用包括新发现的所有 profile。
 
 ## 技术栈
 
@@ -44,7 +54,7 @@
 
 本仓库是一个**统一包（unified package）**——一个可安装目录同时带上前后端两半：
 
-```
+```text
 plugin.yaml                 # 清单（name / version / description / platforms）
 __init__.py                 # agent 半边 —— 只读的 office_status 工具
 desktop/plugin.js           # 桌面端半边 —— canvas 办公室页面、侧栏导航、
@@ -63,7 +73,7 @@ docs/                       # 截图
 3. **启用开关** — 后端被 import 前，`office-3d` 必须出现在 `config.yaml` 的 `plugins.enabled` 里（安全门）。用 `hermes plugins enable office-3d` 写入。
 4. **agent 半边** — `__init__.py` 注册一个只读工具 `office_status`，在 gateway 进程里直接扫描同样的两个数据源（不走 HTTP、不需要凭据）。
 
-插件可移植：`HERMES_HOME` 会优先读环境变量 `$HERMES_HOME`（回退 `~/.hermes`），profile 通过扫描 `~/.hermes/profiles/` 动态发现——**不写死任何 profile 名字**。
+插件使用 Hermes 的 `get_default_hermes_root()` 查找 fleet 根目录（包含自定义根目录与命名 profile 进程），profile 名称会在该根目录下被动态发现。
 
 ## 安装
 
@@ -98,13 +108,13 @@ bash install.sh
 然后让它生效：
 
 - **桌面半边**：彻底退出并重开 Hermes 桌面 app（或 ⌘K → **Reload desktop plugins**），再从侧栏打开 **Office** 页面。
-- **后端半边**：重启 dashboard web 服务，让它挂载 `/api/plugins/office-3d/`。如果你用 `hermes dashboard`，停掉再启动即可。（若是 LAN/LaunchAgent 部署，重启对应服务。）
+- **Backend half**: 重启 dashboard web 服务，让它挂载 `/api/plugins/office-3d/`。如果你用 `hermes dashboard`，停掉再启动即可。（若是 LAN/LaunchAgent 部署，重启对应服务。）
 
 ## 前置要求
 
 - Hermes Desktop **0.21.4+** —— 必须有桌面 app；只有 CLI/gateway 不会加载桌面插件。
 - dashboard web 服务在运行（它才提供 `/api/plugins/...`）。
-- **Linux / macOS / Windows。** 唯一平台相关代码是 PID 存活探测：`os.kill(pid, 0)` 在 Windows 上会走 `TerminateProcess`，因此改用 `ctypes` 的 `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` + `GetExitCodeProcess`，不会向目标进程发信号——实测见 [`WINDOWS.md`](./WINDOWS.md)。
+- **Linux / macOS / Windows。** 唯一平台相关代码是 PID 存活探测：`os.kill(pid, 0)` 在 Windows 上会走 `TerminateProcess`，因此改用 `ctypes` 的 `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` + `GetExitCodeProcess`，不会向目标进程发信号——实测见 [WINDOWS.md](./WINDOWS.md)。
 
 ## 发布
 

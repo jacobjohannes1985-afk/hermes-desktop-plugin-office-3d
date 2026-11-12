@@ -454,7 +454,10 @@ def _format(entries: List[Dict[str, Any]]) -> str:
         return "No Hermes profiles found under " + HERMES_HOME + "."
     online = sum(1 for e in entries if e["online"])
     busy = sum(1 for e in entries if e["busy"])
-    sessions = sum(int(e["active_sessions"]) for e in entries)
+    sessions = sum(
+        int(e.get("active_sessions") or 0) + int(e.get("delegated_sessions") or 0)
+        for e in entries
+    )
     tokens = sum(int(e["tokens_total"]) for e in entries)
     cost = sum(float(e["cost_total"]) for e in entries)
 
@@ -466,7 +469,8 @@ def _format(entries: List[Dict[str, Any]]) -> str:
         state = "busy" if e["busy"] else ("idle" if e["online"] else "offline")
         bits = ["{}: {}".format(e["profile"], state)]
         if e["busy"]:
-            bits.append("{} active session(s)".format(e["active_sessions"]))
+            active_cnt = int(e.get("active_sessions") or 0) + int(e.get("delegated_sessions") or 0)
+            bits.append("{} active session(s)".format(active_cnt))
         elif e["online"] and isinstance(e["idle_since"], (int, float)):
             mins = max(0, int((time.time() - float(e["idle_since"])) // 60))
             bits.append("idle {}m".format(mins))

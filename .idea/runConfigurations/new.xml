@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="new" type="Application" factoryName="Application" activateToolWindowBeforeRun="false">
+    <option name="ALTERNATIVE_JRE_PATH" value="21" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <envs>
+      <env name="---   You:   fehler korrigieren Agent:   Es scheint, als hätten Sie eine Fehlermeldung oder einen Codefehler im Projekt `hermes-desktop-plugin-office-3d` entdeckt, aber die spezifische Fehlermeldung oder die betroffene Datei wurde in Ihrer Nachricht noch nicht mitgeliefert.  Um Ihnen helfen zu können, benötige ich bitte folgende Informationen:  1.  **Die Fehlermeldung:** Kopieren Sie bitte die genaue Fehlermeldung (Stacktrace, Compiler-Fehler oder Laufzeitfehler) hier hinein. 2.  **Der relevante Code-Abschnitt:** Zeigen Sie mir die Datei und die Zeilen an, in denen der Fehler auftritt. 3.  **Kontext:** Was wollten Sie erreichen, als der Fehler auftrat? (z.B. &quot;Beim Starten des Plugins&quot;, &quot;Beim Rendern eines 3D-Objekts&quot;, etc.)  **Sobald Sie mir diese Details schicken, kann ich:** *   Die Ursache des Fehlers analysieren. *   Einen Korrekturvorschlag erstellen. *   Die notwendigen Änderungen an den Dateien im Projekt vornehmen.  **Bitte posten Sie den Fehler einfach hier unter die Nachricht!**" value="" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="sun.jvm.hotspot.ui.AnnotatedMemoryPanel" />
+    <module name="hermes-desktop-plugin-office-3d" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../hermes-quota-plugin" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
